@@ -1,9 +1,14 @@
 package com.joseph.demo.controllers;
 
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,9 +25,11 @@ import com.joseph.demo.entities.Role;
 import com.joseph.demo.entities.User;
 import com.joseph.demo.repositories.RoleRepository;
 import com.joseph.demo.repositories.UserRepository;
+import com.joseph.demo.services.jwtTokenService;
 
-import java.util.Collections;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -38,17 +45,28 @@ public class AuthController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private jwtTokenService jwttokenService;
 
     @PostMapping("/signin")
-    public ResponseEntity<String> authenticateUser(@RequestBody LoginDto loginDto){
+    public ResponseEntity<Map<String,String>> authenticateUser(@RequestBody LoginDto loginDto){
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 loginDto.getUsernameOrEmail(), loginDto.getPassword()));
-
+        log.info("auth({})",authentication);
+        String token = jwttokenService.generateToken(authentication.getName());
+        log.info("token({})",token);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return new ResponseEntity<>("User signed-in successfully!.", HttpStatus.OK);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+//        return new ResponseEntity<>("User signed-in successfully!.", HttpStatus.OK);
     }
 
     @PostMapping("/signup")
+    //@PreAuthorize("permitAll()")
+    //@PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> registerUser(@RequestBody SignUpDto signUpDto){
 
         // add check for username exists in a DB
