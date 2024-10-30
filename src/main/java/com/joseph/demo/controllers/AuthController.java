@@ -66,7 +66,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     //@PreAuthorize("permitAll()")
-    //@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> registerUser(@RequestBody SignUpDto signUpDto){
 
         // add check for username exists in a DB
